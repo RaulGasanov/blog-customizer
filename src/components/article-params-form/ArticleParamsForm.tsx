@@ -1,158 +1,159 @@
+import { FormEvent, ReactElement, useRef, useState } from 'react';
+import { Button } from '../button';
 import { ArrowButton } from 'components/arrow-button';
-import { Button } from 'components/button';
-import { useEffect, useState } from 'react';
-import clsx from 'clsx';
+import { Text } from 'components/text';
+import { Select } from 'components/select';
+import { RadioGroup } from 'components/radio-group';
+import { Separator } from 'components/separator';
+
 import styles from './ArticleParamsForm.module.scss';
-import { Separator } from '../separator';
-import { Select } from '../select';
-import { Text } from '../text';
+import clsx from 'clsx';
 import {
+	ArticleStateType,
 	OptionType,
-	fontColors,
-	fontFamilyOptions,
 	backgroundColors,
 	contentWidthArr,
-	fontSizeOptions,
 	defaultArticleState,
-	ArticleStateType,
+	fontColors,
+	fontFamilyOptions,
+	fontSizeOptions,
 } from 'src/constants/articleProps';
-import { RadioGroup } from '../radio-group';
+import { useOutsideClickClose } from '../select/hooks/useOutsideClickClose';
 
-type PropsArticleParamsForm = {
-	onSubmit?: (params: ArticleStateType) => void;
-	onReset?: (params: ArticleStateType) => void;
-	onToggle?: (params: boolean) => void;
-	formOp: boolean;
+type FormProps = {
+	currentAppState: ArticleStateType;
+	setCurrentAppState: (params: ArticleStateType) => void;
 };
 
-export const ArticleParamsForm = (props: PropsArticleParamsForm) => {
-	const { onSubmit, onReset, onToggle, formOp } = props;
+export const ArticleParamsForm = ({
+	currentAppState,
+	setCurrentAppState,
+}: FormProps): ReactElement => {
+	//Состояние значения шрифта в форме
+	const [newFontFamily, setFontFamily] = useState<OptionType>(
+		currentAppState.fontFamilyOption
+	);
 
-	const [params, setParams] = useState({
-		fontFamilyOption: fontFamilyOptions[0],
-		fontColor: fontColors[0],
-		backgroundColor: backgroundColors[0],
-		contentWidth: contentWidthArr[0],
-		fontSizeOption: fontSizeOptions[0],
+	//Состояние значения размера текста в форме
+	const [newFontSize, setFontSize] = useState<OptionType>(
+		currentAppState.fontSizeOption
+	);
+
+	//Состояние значения цвета текста в форме
+	const [newFontColor, setFontColor] = useState<OptionType>(
+		currentAppState.fontColor
+	);
+
+	//Состояние значения цвета фона в форме
+	const [newBackgroundColor, setBackgroundColor] = useState<OptionType>(
+		currentAppState.backgroundColor
+	);
+
+	//Состояние значения ширины контента в форме
+	const [newContentWidth, setContentWidth] = useState<OptionType>(
+		currentAppState.contentWidth
+	);
+
+	//Состояние открытия/закрытия меню настроек
+	const [isMenuOpened, setIsMenuOpened] = useState(false);
+
+	//Ссылка на элемент, используемый хуком закрытия меню
+	const rootRef = useRef<HTMLDivElement>(null);
+
+	//Хук, который закрывает меню, если произошел клик вне формы
+	useOutsideClickClose({
+		isOpen: isMenuOpened,
+		rootRef,
+		onClose: () => setIsMenuOpened(false),
+		onChange: setIsMenuOpened,
 	});
 
-	useEffect(() => {
-		const handlerOpenWidget = (event: KeyboardEvent) => {
-			if (event.key === 'Escape' && formOp === true) onToggle?.(false);
-		};
-		document.addEventListener('keydown', handlerOpenWidget);
-		return () => document.removeEventListener('keydown', handlerOpenWidget);
-	}, [formOp]);
-
-	const toggler = () => {
-		onToggle?.(formOp);
-	};
-
-	const cbFonts = (option: OptionType) => {
-		setParams({
-			...params,
-			fontFamilyOption: option,
+	//Обработчик отправки формы
+	function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setCurrentAppState({
+			fontFamilyOption: newFontFamily,
+			fontColor: newFontColor,
+			backgroundColor: newBackgroundColor,
+			contentWidth: newContentWidth,
+			fontSizeOption: newFontSize,
 		});
-	};
+	}
 
-	const cbColorsFont = (option: OptionType) => {
-		setParams({
-			...params,
-			fontColor: option,
-		});
-	};
-
-	const cbColorsBackground = (option: OptionType) => {
-		setParams({
-			...params,
-			backgroundColor: option,
-		});
-	};
-
-	const cbContentWidth = (option: OptionType) => {
-		setParams({
-			...params,
-			contentWidth: option,
-		});
-	};
-
-	const cbFontSize = (option: OptionType) => {
-		setParams({
-			...params,
-			fontSizeOption: option,
-		});
-	};
-
-	const submitParams = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		onSubmit?.(params);
-	};
-
-	const resetStyles = () => {
-		setParams(defaultArticleState);
-		onReset?.(defaultArticleState);
-	};
-
-	const sidebarStyle = clsx({
-		[styles.container]: true,
-		[styles.container_open]: formOp,
-	});
+	//Обработчик сброса значений формы
+	function handleFormReset(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setCurrentAppState(defaultArticleState);
+		setFontFamily(defaultArticleState.fontFamilyOption);
+		setFontColor(defaultArticleState.fontColor);
+		setBackgroundColor(defaultArticleState.backgroundColor);
+		setContentWidth(defaultArticleState.contentWidth);
+		setFontSize(defaultArticleState.fontSizeOption);
+	}
 
 	return (
-		<>
-			<ArrowButton onClick={toggler} isOpen={formOp} />
-			<aside className={sidebarStyle}>
+		<div ref={rootRef}>
+			<ArrowButton
+				onClick={() => setIsMenuOpened(!isMenuOpened)}
+				isOpened={isMenuOpened}
+			/>
+			<aside
+				className={clsx(
+					styles.container,
+					isMenuOpened && styles.container_open
+				)}>
 				<form
 					className={styles.form}
-					onSubmit={submitParams}
-					onReset={resetStyles}>
-					<fieldset style={{ display: 'grid', gap: 'clamp(10px, 4vh, 50px)' }}>
-						<Text size={31} weight={800} uppercase>
-							{'Задайте параметры'}
-						</Text>
-						<Select
-							onChange={cbFonts}
-							selected={params.fontFamilyOption}
-							placeholder='Open Sans'
-							title='Шрифт'
-							options={fontFamilyOptions}
-						/>
-						<Select
-							onChange={cbColorsFont}
-							selected={params.fontColor}
-							placeholder={params.fontColor.title}
-							title='Цвет шрифта'
-							options={fontColors}
-						/>
-						<Separator />
-						<Select
-							onChange={cbColorsBackground}
-							selected={params.backgroundColor}
-							placeholder={params.backgroundColor.title}
-							title='Цвет фона'
-							options={backgroundColors}
-						/>
-						<Select
-							onChange={cbContentWidth}
-							selected={params.contentWidth}
-							placeholder={params.contentWidth.title}
-							title='Ширина контента'
-							options={contentWidthArr}
-						/>
-						<RadioGroup
-							name={params.fontSizeOption.className}
-							options={fontSizeOptions}
-							selected={params.fontSizeOption}
-							onChange={cbFontSize}
-							title={'Размер шрифта'}
-						/>
-					</fieldset>
+					onReset={handleFormReset}
+					onSubmit={handleFormSubmit}>
+					<Text
+						as='h2'
+						size={31}
+						weight={800}
+						fontStyle='normal'
+						uppercase
+						align='left'
+						family='open-sans'>
+						Задайте параметры
+					</Text>
+					<Select
+						options={fontFamilyOptions}
+						selected={newFontFamily}
+						title='Шрифт'
+						onChange={setFontFamily}
+					/>
+					<RadioGroup
+						title='Размер шрифта'
+						name='font-size'
+						options={fontSizeOptions}
+						selected={newFontSize}
+						onChange={setFontSize}
+					/>
+					<Select
+						options={fontColors}
+						selected={newFontColor}
+						title='Цвет шрифта'
+						onChange={setFontColor}
+					/>
+					<Separator />
+					<Select
+						options={backgroundColors}
+						selected={newBackgroundColor}
+						title='Цвет фона'
+						onChange={setBackgroundColor}
+					/>
+					<Select
+						options={contentWidthArr}
+						selected={newContentWidth}
+						title='Ширина контента'
+						onChange={setContentWidth}
+					/>
 					<div className={styles.bottomContainer}>
-						<Button title='Сбросить' type='reset' />
-						<Button title='Применить' type='submit' />
+						<Button title='Сбросить' type='reset' color='black' />
+						<Button title='Применить' type='submit' color='gold' />
 					</div>
 				</form>
 			</aside>
-		</>
+		</div>
 	);
 };

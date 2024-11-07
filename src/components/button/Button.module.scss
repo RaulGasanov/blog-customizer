@@ -10,22 +10,18 @@
 	cursor: pointer;
 }
 
-.button_apply {
-	background-color: #ffc802;
+.button.reset:active {
+	mix-blend-mode: difference;
 }
 
-.button_clear {
-	background-color: white;
+.button.reset:hover {
+	background: #ffffff;
 }
 
-.button_apply:hover {
-	background-color: #ffedab;
+.button.submit:active {
+	background: #ffc802;
 }
 
-.button_clear:hover {
-	background-color: #000000;
-}
-
-.button_clear:hover div {
-	color: white;
+.button.submit:hover {
+	background: #ffedab;
 }
